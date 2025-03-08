@@ -1,45 +1,47 @@
 package main
 
 import (
-	"encoding/json"
-	"os"
+	"fmt"
+	"sync"
+	"sync/atomic"
 
 	"github.com/asoliman1/experiments/gaps/internal/pkg/nodes"
 )
 
 func main() {
-	root := nodes.Node{
-		Sequence:        "",
-		GapDepth:        10,
-		Lengths:         []int{0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-		Tails:           []int{-1, -1, -1, -1, -1, -1, -1, -1, -1, -1},
-		LastRecurrences: []int{-1, -1, -1, -1, -1, -1, -1, -1, -1, -1},
-		GapBuckets:      [][]int{{}, {}, {}, {}, {}, {}, {}, {}, {}, {}},
-		Level:           0,
-		Value:           -1,
+	numWorkers := 5
+	maxTreeLevel := 20
+
+	jobs := make(chan nodes.Node, 100000000)
+	jobs <- nodes.NewRoot(10)
+
+	var counter atomic.Int32
+
+	wg := new(sync.WaitGroup)
+	wg.Add(numWorkers)
+	for range numWorkers {
+		go func() {
+			defer wg.Done()
+			for node := range jobs {
+				if node.Level == maxTreeLevel {
+					counter.Add(1)
+					continue
+				}
+				if left, ok := node.Left(); ok {
+					jobs <- left
+				}
+				if right, ok := node.Right(); ok {
+					jobs <- right
+				}
+			}
+		}()
 	}
 
-	N := 24
+	go func() {
+		fmt.Println(counter.Load())
+	}()
+	wg.Wait()
 
-	queue := []nodes.Node{root}
-	sets := []string{}
-	for len(queue) > 0 {
-		next := queue[0]
-		if len(queue) > 0 {
-			queue = queue[1:]
-		}
-		if next.Level == N {
-			sets = append(sets, next.Sequence)
-			continue
-		}
-		if left, ok := next.Left(); ok {
-			queue = append(queue, left)
-		}
-		if right, ok := next.Right(); ok {
-			queue = append(queue, right)
-		}
-	}
-
-	raw, _ := json.MarshalIndent(sets, "", " ")
-	os.WriteFile("sets.json", raw, os.ModePerm)
+	//raw, _ := json.MarshalIndent(sets, "", " ")
+	//os.WriteFile("sets.json", raw, os.ModePerm)
 }

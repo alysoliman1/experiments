@@ -2,6 +2,23 @@ package nodes
 
 import "fmt"
 
+// NewRoot creates a new root at a certain gap length.
+func NewRoot(GapDepth int) Node {
+	root := Node{
+		Sequence: "",
+		GapDepth: GapDepth,
+		Level:    0,
+		Value:    -1,
+	}
+	for range GapDepth {
+		root.Lengths = append(root.Lengths, 0)
+		root.Tails = append(root.Tails, -1)
+		root.LastRecurrences = append(root.LastRecurrences, -1)
+		root.GapBuckets = append(root.GapBuckets, []int{})
+	}
+	return root
+}
+
 // The Node object represents a finite collection of data associated
 // with every node in a binary tree. Given the data for a node, we are able
 // to decide if the node has a left or right child, and, if so, produce

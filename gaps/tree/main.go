@@ -43,15 +43,17 @@ func main() {
 			if err := json.Unmarshal(record.Kinesis.Data, &node); err != nil {
 				log.Fatal("invalid node record")
 			}
-			writeToDynamoDB(dynamoClient, e.Table, struct {
-				Sequence string `dynamodbav:"sequence"`
-				Level    int    `dynamodbav:"level"`
-				Value    int    `dynamodbav:"value"`
-			}{
-				Sequence: node.Sequence,
-				Level:    node.Level,
-				Value:    node.Value,
-			})
+			if node.Level > 0 {
+				writeToDynamoDB(dynamoClient, e.Table, struct {
+					Sequence string `dynamodbav:"sequence"`
+					Level    int    `dynamodbav:"level"`
+					Value    int    `dynamodbav:"value"`
+				}{
+					Sequence: node.Sequence,
+					Level:    node.Level,
+					Value:    node.Value,
+				})
+			}
 			if node.Level == e.N {
 				continue
 			}

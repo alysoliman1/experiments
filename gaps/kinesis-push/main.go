@@ -48,11 +48,13 @@ func main() {
 	if err != nil {
 		log.Fatal("invalid node record")
 	}
-	if _, err := krakenClient.PutRecord(&kinesis.PutRecordInput{
+	res, err := krakenClient.PutRecord(&kinesis.PutRecordInput{
 		StreamName:   aws.String(e.Stream),
 		Data:         data,
 		PartitionKey: aws.String(paritionKey),
-	}); err != nil {
+	})
+	if err != nil {
 		log.Fatalf("Failed to put record: %v", err)
 	}
+	log.Println(aws.StringValue(res.ShardId), aws.StringValue(res.SequenceNumber))
 }

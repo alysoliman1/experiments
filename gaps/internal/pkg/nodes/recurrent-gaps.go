@@ -1,6 +1,10 @@
 package nodes
 
-import "fmt"
+import (
+	"fmt"
+
+	"github.com/asoliman1/experiments/gaps/internal/pkg/utils"
+)
 
 // NewRoot creates a new root at a certain gap length.
 func NewRoot(GapDepth int) Node {
@@ -60,9 +64,9 @@ func (n *Node) extend(newElement int) (child Node, ok bool) {
 	copy(child.Lengths, n.Lengths)
 	copy(child.Tails, n.Tails)
 	copy(child.LastRecurrences, n.LastRecurrences)
-	var buckets []*Bucket
+	var buckets []*utils.Bucket
 	for i := range n.GapDepth {
-		buckets = append(buckets, NewBucket(n.GapBuckets[i], f(i)))
+		buckets = append(buckets, utils.NewBucket(n.GapBuckets[i], f(i)))
 	}
 	for i := range n.GapDepth {
 		// If the new element matches the sequence tail then the tail
@@ -122,32 +126,6 @@ func (n Node) Left() (leftChild Node, ok bool) {
 // child then a nil is returned.
 func (n Node) Right() (rightChild Node, ok bool) {
 	return n.extend(1)
-}
-
-type Bucket struct {
-	cap  int
-	set  map[int]struct{}
-	list []int
-}
-
-func NewBucket(bucket []int, cap int) *Bucket {
-	b := &Bucket{cap: cap, set: make(map[int]struct{}), list: bucket}
-	for _, element := range bucket {
-		b.set[element] = struct{}{}
-	}
-	return b
-}
-
-func (b *Bucket) Add(newElement int) bool {
-	if _, ok := b.set[newElement]; ok {
-		return true
-	}
-	if len(b.set) >= b.cap {
-		return false
-	}
-	b.set[newElement] = struct{}{}
-	b.list = append(b.list, newElement)
-	return true
 }
 
 func f(i int) int {
